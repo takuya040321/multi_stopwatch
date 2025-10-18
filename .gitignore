@@ -1,0 +1,86 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+*.tmp                   # 一時ファイル
+*.bak                   # バックアップファイル
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# VS Code (必要に応じて)
+.vscode/
+.vscode/settings.json    # ワークスペース設定
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+.pubspec.lock            # 共有しない場合に除外
+/build/
+/coverage/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio build artifacts
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# Platform specific (iOS Flutter Frameworks)
+**/ios/Flutter/App.framework
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/ephemeral/
+
+# Generated files
+*.snap                  # Flutterテストのスナップショットファイル
+
+# OS-specific binaries
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Claude Code関連ファイル除外
+.claude/                  # Claude Codeのローカルキャッシュ・メタ情報
+*.claude-tmp              # Claude Code一時ファイル
+
+# AI用ローカルメモ（チーム共有しない場合）
+ai_docs/local/
+
+# AIツール共通除外例
+.serena-cache/
+.mcp-index/
+*.serena.tmp
+
+# 環境変数や秘密鍵など
+.env
+.env.*
+*.key
+*.pem
+*.p12
+secrets/
+credentials/
