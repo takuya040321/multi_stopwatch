@@ -3,11 +3,22 @@ library;
 
 import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
+import "package:hive_flutter/hive_flutter.dart";
+import "models/stopwatch_model.dart";
 import "views/home_screen.dart";
 
-void main() {
+void main() async {
+  // Flutterバインディングの初期化
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Hiveの初期化
+  await Hive.initFlutter();
+
+  // StopwatchModelアダプタの登録
+  Hive.registerAdapter(StopwatchModelAdapter());
+
+  // Riverpodを使用するためProviderScopeでラップ
   runApp(
-    // Riverpodを使用するためProviderScopeでラップ
     const ProviderScope(
       child: MyApp(),
     ),
