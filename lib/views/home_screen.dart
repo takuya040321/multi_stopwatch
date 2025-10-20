@@ -4,20 +4,67 @@
 library;
 
 import "package:flutter/material.dart";
+import "package:flutter_riverpod/flutter_riverpod.dart";
+import "../providers/stopwatch_provider.dart";
+import "../providers/timer_provider.dart";
 import "widgets/stopwatch_card.dart";
 
 /// ホーム画面
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  bool _isInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeApp();
+  }
+
+  /// アプリケーションの初期化
+  ///
+  /// リポジトリの初期化とストップウォッチデータの読み込みを行う
+  Future<void> _initializeApp() async {
+    try {
+      // リポジトリの初期化
+      await ref.read(initializeRepositoryProvider.future);
+
+      // ストップウォッチデータの読み込み
+      await ref.read(stopwatchProvider.notifier).loadStopwatches();
+
+      setState(() {
+        _isInitialized = true;
+      });
+    } catch (e) {
+      debugPrint("初期化エラー: $e");
+      // エラーが発生しても初期化済みとして扱う
+      setState(() {
+        _isInitialized = true;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // TODO: Phase 3でProviderから取得
-    // 現時点ではダミーデータを使用
-    final dummyStopwatches = [
-      {"index": 0, "name": "ストップウォッチ 1", "elapsedSeconds": 3665}, // 1時間1分5秒
-      {"index": 1, "name": "ストップウォッチ 2", "elapsedSeconds": 5430}, // 1時間30分30秒
-    ];
+    // タイマー制御を監視（タイマーの自動起動/停止のため）
+    ref.watch(timerControllerProvider);
+
+    // 初期化中はローディング表示
+    if (!_isInitialized) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    // ストップウォッチリストを取得
+    final stopwatches = ref.watch(stopwatchProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -26,34 +73,50 @@ class HomeScreen extends StatelessWidget {
           // 追加ボタン
           IconButton(
             icon: const Icon(Icons.add),
-            onPressed: () {
-              // TODO: Phase 3で実装
-              debugPrint("追加ボタンが押されました");
-            },
+            onPressed: _addStopwatch,
             tooltip: "ストップウォッチを追加",
           ),
           // 設定ボタン
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
-              // TODO: Phase 5で実装
+              // TODO: Phase 6で設定画面に遷移
               debugPrint("設定ボタンが押されました");
             },
             tooltip: "設定",
           ),
         ],
       ),
-      body: ListView.builder(
-        itemCount: dummyStopwatches.length,
-        itemBuilder: (context, index) {
-          final stopwatch = dummyStopwatches[index];
-          return StopwatchCard(
-            index: stopwatch["index"] as int,
-            name: stopwatch["name"] as String,
-            elapsedSeconds: stopwatch["elapsedSeconds"] as int,
-          );
-        },
-      ),
+      body: stopwatches.isEmpty
+          ? const Center(
+              child: Text("ストップウォッチがありません"),
+            )
+          : ListView.builder(
+              itemCount: stopwatches.length,
+              itemBuilder: (context, index) {
+                final stopwatch = stopwatches[index];
+                return StopwatchCard(
+                  key: ValueKey(stopwatch.id),
+                  stopwatch: stopwatch,
+                );
+              },
+            ),
     );
+  }
+
+  /// ストップウォッチを追加する
+  Future<void> _addStopwatch() async {
+    try {
+      await ref.read(stopwatchProvider.notifier).addStopwatch();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceFirst("Exception: ", "")),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }

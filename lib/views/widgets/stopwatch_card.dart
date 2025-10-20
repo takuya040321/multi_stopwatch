@@ -4,33 +4,59 @@
 library;
 
 import "package:flutter/material.dart";
+import "package:flutter_riverpod/flutter_riverpod.dart";
+import "../../models/stopwatch_model.dart";
+import "../../providers/stopwatch_provider.dart";
 import "../../utils/constants.dart";
 import "time_display.dart";
 
 /// ストップウォッチカード
 ///
-/// [index] ストップウォッチのインデックス（エージェントカラー判定に使用）
-/// [name] ストップウォッチの名称
-/// [elapsedSeconds] 経過秒数
-class StopwatchCard extends StatelessWidget {
-  /// ストップウォッチのインデックス
-  final int index;
-
-  /// ストップウォッチの名称
-  final String name;
-
-  /// 経過秒数
-  final int elapsedSeconds;
+/// [stopwatch] ストップウォッチのモデル
+class StopwatchCard extends ConsumerStatefulWidget {
+  /// ストップウォッチのモデル
+  final StopwatchModel stopwatch;
 
   const StopwatchCard({
     super.key,
-    required this.index,
-    required this.name,
-    required this.elapsedSeconds,
+    required this.stopwatch,
   });
 
   @override
+  ConsumerState<StopwatchCard> createState() => _StopwatchCardState();
+}
+
+class _StopwatchCardState extends ConsumerState<StopwatchCard> {
+  late TextEditingController _nameController;
+  bool _isEditing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.stopwatch.name);
+  }
+
+  @override
+  void didUpdateWidget(StopwatchCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // ストップウォッチが変更された場合、名称コントローラーを更新
+    if (oldWidget.stopwatch.name != widget.stopwatch.name && !_isEditing) {
+      _nameController.text = widget.stopwatch.name;
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // すべてのストップウォッチを取得してインデックスを計算
+    final stopwatches = ref.watch(stopwatchProvider);
+    final index = stopwatches.indexWhere((sw) => sw.id == widget.stopwatch.id);
+
     // エージェントカラーを取得
     final agentColor = Color(agentColors[index % agentColors.length]);
 
@@ -52,19 +78,42 @@ class StopwatchCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 名称入力欄
-                    TextField(
-                      decoration: InputDecoration(
-                        hintText: name,
-                        border: const OutlineInputBorder(),
-                        isDense: true,
-                      ),
-                      style: const TextStyle(fontSize: 16),
+                    // 名称入力欄と削除ボタン
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _nameController,
+                            decoration: InputDecoration(
+                              hintText: "ストップウォッチ ${index + 1}",
+                              border: const OutlineInputBorder(),
+                              isDense: true,
+                            ),
+                            style: const TextStyle(fontSize: 16),
+                            maxLength: 50,
+                            onChanged: (_) {
+                              _isEditing = true;
+                            },
+                            onSubmitted: _updateName,
+                            onEditingComplete: () {
+                              _updateName(_nameController.text);
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // 削除ボタン
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline),
+                          onPressed: _deleteStopwatch,
+                          tooltip: "削除",
+                          color: Colors.red,
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 16),
                     // 時間表示
                     Center(
-                      child: TimeDisplay(elapsedSeconds: elapsedSeconds),
+                      child: TimeDisplay(elapsedSeconds: widget.stopwatch.elapsedSeconds),
                     ),
                     const SizedBox(height: 16),
                     // 操作ボタン
@@ -74,29 +123,23 @@ class StopwatchCard extends StatelessWidget {
                         // 開始ボタン
                         IconButton(
                           icon: const Icon(Icons.play_arrow),
-                          onPressed: () {
-                            // TODO: Phase 3で実装
-                            debugPrint("開始ボタンが押されました: $name");
-                          },
+                          onPressed: widget.stopwatch.isRunning ? null : _startStopwatch,
                           tooltip: "開始",
+                          color: widget.stopwatch.isRunning ? Colors.grey : Colors.green,
                         ),
                         // 停止ボタン
                         IconButton(
                           icon: const Icon(Icons.pause),
-                          onPressed: () {
-                            // TODO: Phase 3で実装
-                            debugPrint("停止ボタンが押されました: $name");
-                          },
+                          onPressed: widget.stopwatch.isRunning ? _stopStopwatch : null,
                           tooltip: "停止",
+                          color: widget.stopwatch.isRunning ? Colors.orange : Colors.grey,
                         ),
                         // リセットボタン
                         IconButton(
                           icon: const Icon(Icons.refresh),
-                          onPressed: () {
-                            // TODO: Phase 3で実装
-                            debugPrint("リセットボタンが押されました: $name");
-                          },
+                          onPressed: _resetStopwatch,
                           tooltip: "リセット",
+                          color: Colors.blue,
                         ),
                       ],
                     ),
@@ -108,5 +151,113 @@ class StopwatchCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// 名称を更新する
+  Future<void> _updateName(String newName) async {
+    _isEditing = false;
+    final trimmedName = newName.trim();
+    if (trimmedName != widget.stopwatch.name) {
+      try {
+        await ref.read(stopwatchProvider.notifier).updateName(
+              widget.stopwatch.id,
+              trimmedName,
+            );
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("名称の更新に失敗しました: $e"),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  /// ストップウォッチを開始する
+  Future<void> _startStopwatch() async {
+    try {
+      await ref.read(stopwatchProvider.notifier).startStopwatch(widget.stopwatch.id);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("開始に失敗しました: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  /// ストップウォッチを停止する
+  Future<void> _stopStopwatch() async {
+    try {
+      await ref.read(stopwatchProvider.notifier).stopStopwatch(widget.stopwatch.id);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("停止に失敗しました: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  /// ストップウォッチをリセットする
+  Future<void> _resetStopwatch() async {
+    try {
+      await ref.read(stopwatchProvider.notifier).resetStopwatch(widget.stopwatch.id);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("リセットに失敗しました: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  /// ストップウォッチを削除する
+  Future<void> _deleteStopwatch() async {
+    // 確認ダイアログを表示
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("削除確認"),
+        content: Text("${widget.stopwatch.name}を削除しますか？"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text("キャンセル"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text("削除"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        await ref.read(stopwatchProvider.notifier).removeStopwatch(widget.stopwatch.id);
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(e.toString().replaceFirst("Exception: ", "")),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
   }
 }
