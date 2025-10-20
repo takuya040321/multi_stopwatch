@@ -17,13 +17,46 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObserver {
   bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
+    // アプリライフサイクルの監視を開始
+    WidgetsBinding.instance.addObserver(this);
     _initializeApp();
+  }
+
+  @override
+  void dispose() {
+    // アプリライフサイクルの監視を停止
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    // アプリがバックグラウンドに移行する際に現在の状態を保存
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      _saveCurrentState();
+    }
+  }
+
+  /// 現在のストップウォッチ状態を保存する
+  ///
+  /// アプリがバックグラウンドに移行する際に呼び出される
+  Future<void> _saveCurrentState() async {
+    try {
+      final repository = ref.read(stopwatchRepositoryProvider);
+      final stopwatches = ref.read(stopwatchProvider);
+      await repository.saveStopwatches(stopwatches);
+      debugPrint("アプリ終了時の状態を保存しました");
+    } catch (e) {
+      debugPrint("アプリ終了時の保存エラー: $e");
+    }
   }
 
   /// アプリケーションの初期化
