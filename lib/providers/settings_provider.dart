@@ -61,6 +61,32 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       throw Exception("レイアウトモードの変更に失敗しました。もう一度お試しください。");
     }
   }
+
+  /// ウィンドウサイズを更新する
+  ///
+  /// [width] ウィンドウの幅（最小800）
+  /// [height] ウィンドウの高さ（最小600）
+  Future<void> updateWindowSize(double width, double height) async {
+    // 最小サイズの検証
+    if (width < 800) {
+      throw Exception("ウィンドウ幅は最小800px以上である必要があります。");
+    }
+    if (height < 600) {
+      throw Exception("ウィンドウ高さは最小600px以上である必要があります。");
+    }
+
+    try {
+      final newSettings = state.copyWith(
+        windowWidth: width,
+        windowHeight: height,
+      );
+      state = newSettings;
+      await _repository.saveSettings(newSettings);
+    } catch (e) {
+      debugPrint("ウィンドウサイズ更新エラー: $e");
+      throw Exception("ウィンドウサイズの保存に失敗しました。もう一度お試しください。");
+    }
+  }
 }
 
 /// SettingsRepositoryのプロバイダー
