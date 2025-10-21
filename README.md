@@ -1,6 +1,11 @@
-# ストップウォッチアプリ
+# Multi Stopwatch
 
 複数のタスクや作業時間を個別に計測・管理できるWindowsデスクトップアプリケーションです。
+
+[![Flutter Version](https://img.shields.io/badge/Flutter-3.24.0%2B-blue)](https://flutter.dev/)
+[![Dart Version](https://img.shields.io/badge/Dart-3.5.0%2B-blue)](https://dart.dev/)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)](https://www.microsoft.com/windows)
 
 ## 📋 プロジェクト概要
 
@@ -33,6 +38,9 @@
 - **シンプルな操作**: 各ストップウォッチに開始/停止ボタンとリセットボタン
 - **動的な追加・削除**: 必要に応じてストップウォッチを追加・削除可能
 - **リサイズ対応**: ウィンドウサイズを自由に調整可能
+- **キーボードショートカット**: Ctrl/Cmd+Nでストップウォッチを追加
+- **ホバー効果**: カードやボタンにマウスを乗せると視覚的なフィードバック
+- **確認ダイアログ**: 削除やリセット時に誤操作を防ぐ
 
 ## 🛠 技術スタック
 
@@ -42,12 +50,20 @@
 - **対象プラットフォーム**: Windows 10以降
 
 ### 主要パッケージ
-- **flutter_riverpod**: 状態管理
-- **hive / isar**: ローカルデータベース
-- **shared_preferences**: 設定の永続化
-- **window_manager**: ウィンドウ制御
-- **path_provider**: ファイルパス取得
-- **intl**: 時間フォーマット
+- **flutter_riverpod**: 状態管理（2.6.1）
+- **hive / hive_flutter**: ローカルデータベース（2.2.3）
+- **shared_preferences**: 設定の永続化（2.3.3）
+- **window_manager**: ウィンドウ制御（0.4.3）
+- **path_provider**: ファイルパス取得（2.1.5）
+- **intl**: 時間フォーマット（0.19.0）
+- **uuid**: 一意識別子の生成（4.5.1）
+
+### 開発用パッケージ
+- **flutter_test**: テストフレームワーク
+- **flutter_lints**: リント設定（5.0.0）
+- **mockito**: モック作成（5.4.4）
+- **build_runner**: コード生成（2.4.13）
+- **hive_generator**: Hiveアダプタ生成（2.0.1）
 
 ### アーキテクチャ
 - **MVVMパターン**: UIとビジネスロジックの分離
@@ -66,8 +82,8 @@
 
 1. **リポジトリのクローン**
    ```bash
-   git clone https://github.com/your-username/stopwatch_app.git
-   cd stopwatch_app
+   git clone https://github.com/takuya040321/multi_stopwatch.git
+   cd multi_stopwatch
    ```
 
 2. **依存パッケージのインストール**
@@ -115,19 +131,24 @@ flutter build windows --release
 
 ### 設定のカスタマイズ
 
-設定ボタンから以下の設定が可能です：
+設定ボタン（⚙アイコン）から以下の設定が可能です：
 
 - **計測モード**
-  - 単一計測モード: 1つのストップウォッチのみ計測可能
+  - 単一計測モード: 1つのストップウォッチのみ計測可能（他は自動停止）
   - 複数同時計測モード: 複数のストップウォッチを同時に計測可能
 
 - **レイアウト**
   - 縦スクロール: ストップウォッチを縦に並べて表示
-  - グリッド: ウィンドウサイズに応じて自動的に配置
+  - グリッド: ウィンドウサイズに応じて自動的に配置（400px単位で列数を調整）
 
 - **自動停止時刻**
   - 指定した時刻に計測を自動停止（最大5つ）
   - 各時刻の有効/無効を個別に切り替え可能
+  - 1分ごとにチェック
+
+### キーボードショートカット
+
+- **Ctrl+N / Cmd+N**: ストップウォッチを追加
 
 ## 🤝 貢献方法
 
@@ -158,7 +179,7 @@ flutter build windows --release
 
 ## 🐛 バグ報告・機能提案
 
-バグを見つけた場合や新しい機能を提案したい場合は、[Issues](https://github.com/your-username/stopwatch_app/issues) から報告してください。
+バグを見つけた場合や新しい機能を提案したい場合は、[Issues](https://github.com/takuya040321/multi_stopwatch/issues) から報告してください。
 
 ## 📧 お問い合わせ
 
@@ -169,18 +190,27 @@ flutter build windows --release
 
 ## 🎯 ロードマップ
 
-### 現在の状態
-- 基本的なストップウォッチ機能
-- データ永続化
-- 自動停止機能
+### v1.0.0（リリース済み）
+- ✅ 基本的なストップウォッチ機能（追加/削除/開始/停止/リセット）
+- ✅ データ永続化（Hive）
+- ✅ 自動停止機能（最大5つの時刻設定）
+- ✅ レイアウト切り替え（縦スクロール/グリッド）
+- ✅ ウィンドウサイズの記憶
+- ✅ UI/UXの改善（アニメーション、ホバー効果、確認ダイアログ）
+- ✅ キーボードショートカット
+- ✅ 包括的なテストスイート（26テスト）
 
-### 今後の予定
+### v1.1.0（計画中）
 - データエクスポート機能（CSV、Excel）
 - レポート機能（日次・週次・月次）
+- タグ・カテゴリ機能
+
+### v2.0.0（将来の予定）
 - ダークモード対応
 - 他プラットフォーム（macOS、Linux）への対応
+- クラウド同期機能
 
-詳細は [実装計画書](docs/implementation_plan.md) をご覧ください。
+詳細は [実装計画書](docs/implementation_plan.md) および [CHANGELOG.md](CHANGELOG.md) をご覧ください。
 
 ## 🙏 謝辞
 
@@ -192,6 +222,7 @@ flutter build windows --release
 
 ---
 
-**作成日**: 2025年1月  
-**バージョン**: 1.0.0  
-**メンテナー**: [Your Name]
+**作成日**: 2025年1月22日
+**バージョン**: 1.0.0
+**リポジトリ**: [GitHub](https://github.com/takuya040321/multi_stopwatch)
+**言語**: 日本語 | [English](README_EN.md)（準備中）
