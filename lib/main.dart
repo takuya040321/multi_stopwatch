@@ -5,6 +5,7 @@ import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:hive_flutter/hive_flutter.dart";
 import "package:window_manager/window_manager.dart";
+import "models/auto_stop_time.dart";
 import "models/stopwatch_model.dart";
 import "repositories/settings_repository.dart";
 import "views/home_screen.dart";
@@ -19,8 +20,9 @@ void main() async {
   // Hiveの初期化
   await Hive.initFlutter();
 
-  // StopwatchModelアダプタの登録
+  // Hiveアダプタの登録
   Hive.registerAdapter(StopwatchModelAdapter());
+  Hive.registerAdapter(AutoStopTimeAdapter());
 
   // 設定の読み込みとウィンドウサイズの復元
   final settingsRepository = SettingsRepository();

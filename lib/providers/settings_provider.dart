@@ -1,6 +1,7 @@
 import "package:flutter/foundation.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 import "../models/app_settings.dart";
+import "../models/auto_stop_time.dart";
 import "../repositories/settings_repository.dart";
 
 /// 設定状態の管理を行うStateNotifier
@@ -85,6 +86,79 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     } catch (e) {
       debugPrint("ウィンドウサイズ更新エラー: $e");
       throw Exception("ウィンドウサイズの保存に失敗しました。もう一度お試しください。");
+    }
+  }
+
+  /// 自動停止時刻を追加する
+  ///
+  /// [autoStopTime] 追加する自動停止時刻
+  /// 最大5個まで追加可能
+  Future<void> addAutoStopTime(AutoStopTime autoStopTime) async {
+    // 最大数チェック
+    if (state.autoStopTimes.length >= 5) {
+      throw Exception("自動停止時刻は最大5個までです。");
+    }
+
+    try {
+      final newSettings = state.copyWith(
+        autoStopTimes: [...state.autoStopTimes, autoStopTime],
+      );
+      state = newSettings;
+      await _repository.saveSettings(newSettings);
+    } catch (e) {
+      debugPrint("自動停止時刻追加エラー: $e");
+      throw Exception("自動停止時刻の追加に失敗しました。もう一度お試しください。");
+    }
+  }
+
+  /// 自動停止時刻を削除する
+  ///
+  /// [id] 削除する自動停止時刻のID
+  Future<void> removeAutoStopTime(String id) async {
+    try {
+      final newSettings = state.copyWith(
+        autoStopTimes: state.autoStopTimes
+            .where((time) => time.id != id)
+            .toList(),
+      );
+      state = newSettings;
+      await _repository.saveSettings(newSettings);
+    } catch (e) {
+      debugPrint("自動停止時刻削除エラー: $e");
+      throw Exception("自動停止時刻の削除に失敗しました。もう一度お試しください。");
+    }
+  }
+
+  /// 自動停止時刻を更新する
+  ///
+  /// [id] 更新する自動停止時刻のID
+  /// [hour] 新しい時
+  /// [minute] 新しい分
+  /// [isEnabled] 新しい有効/無効状態
+  Future<void> updateAutoStopTime({
+    required String id,
+    int? hour,
+    int? minute,
+    bool? isEnabled,
+  }) async {
+    try {
+      final newSettings = state.copyWith(
+        autoStopTimes: state.autoStopTimes.map((time) {
+          if (time.id == id) {
+            return time.copyWith(
+              hour: hour,
+              minute: minute,
+              isEnabled: isEnabled,
+            );
+          }
+          return time;
+        }).toList(),
+      );
+      state = newSettings;
+      await _repository.saveSettings(newSettings);
+    } catch (e) {
+      debugPrint("自動停止時刻更新エラー: $e");
+      throw Exception("自動停止時刻の更新に失敗しました。もう一度お試しください。");
     }
   }
 }

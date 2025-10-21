@@ -7,6 +7,7 @@ import "dart:async";
 import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:window_manager/window_manager.dart";
+import "../providers/auto_stop_provider.dart";
 import "../providers/stopwatch_provider.dart";
 import "../providers/timer_provider.dart";
 import "../providers/settings_provider.dart";
@@ -129,6 +130,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
   Widget build(BuildContext context) {
     // タイマー制御を監視（タイマーの自動起動/停止のため）
     ref.watch(timerControllerProvider);
+
+    // AutoStopServiceを初期化（自動停止機能の有効化）
+    ref.watch(initializeAutoStopServiceProvider);
 
     // 初期化中はローディング表示
     if (!_isInitialized) {
