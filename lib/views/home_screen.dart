@@ -5,12 +5,14 @@ library;
 
 import "dart:async";
 import "package:flutter/material.dart";
+import "package:flutter/services.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:window_manager/window_manager.dart";
 import "../providers/auto_stop_provider.dart";
 import "../providers/stopwatch_provider.dart";
 import "../providers/timer_provider.dart";
 import "../providers/settings_provider.dart";
+import "../utils/snackbar_helper.dart";
 import "widgets/stopwatch_card.dart";
 import "settings_screen.dart";
 
@@ -155,26 +157,38 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     // 最小400pxで1列、以降400pxごとに1列追加（最大10列）
     final crossAxisCount = (screenWidth / 400).floor().clamp(1, 10);
 
-    return Scaffold(
+    return CallbackShortcuts(
+      bindings: <ShortcutActivator, VoidCallback>{
+        // Ctrl/Cmd + N: ストップウォッチを追加
+        const SingleActivator(LogicalKeyboardKey.keyN, control: true): _addStopwatch,
+        const SingleActivator(LogicalKeyboardKey.keyN, meta: true): _addStopwatch,
+      },
+      child: Focus(
+        autofocus: true,
+        child: Scaffold(
       appBar: AppBar(
         title: const Text("Multi Stopwatch"),
         actions: [
           // 追加ボタン
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: _addStopwatch,
-            tooltip: "ストップウォッチを追加",
+          Tooltip(
+            message: "ストップウォッチを追加\n(Ctrl+N / Cmd+N)",
+            child: IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: _addStopwatch,
+            ),
           ),
           // 設定ボタン
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SettingsScreen()),
-              );
-            },
-            tooltip: "設定",
+          Tooltip(
+            message: "設定画面を開く",
+            child: IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -215,6 +229,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                       },
                     ),
             ),
+        ),
+      ),
     );
   }
 
@@ -222,14 +238,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
   Future<void> _addStopwatch() async {
     try {
       await ref.read(stopwatchProvider.notifier).addStopwatch();
+      if (mounted) {
+        showSuccessSnackBar(context, "ストップウォッチを追加しました");
+      }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceFirst("Exception: ", "")),
-            backgroundColor: Colors.red,
-          ),
-        );
+        showErrorSnackBar(context, e.toString().replaceFirst("Exception: ", ""));
       }
     }
   }
