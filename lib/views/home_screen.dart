@@ -3,8 +3,10 @@
 /// ストップウォッチ一覧を表示し、追加・設定などの操作を提供する
 library;
 
+import "dart:async";
 import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
+import "package:window_manager/window_manager.dart";
 import "../providers/stopwatch_provider.dart";
 import "../providers/timer_provider.dart";
 import "../providers/settings_provider.dart";
@@ -19,14 +21,17 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObserver {
+class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObserver, WindowListener {
   bool _isInitialized = false;
+  Timer? _debounceTimer;
 
   @override
   void initState() {
     super.initState();
     // アプリライフサイクルの監視を開始
     WidgetsBinding.instance.addObserver(this);
+    // ウィンドウリサイズの監視を開始
+    windowManager.addListener(this);
     _initializeApp();
   }
 
@@ -34,7 +39,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
   void dispose() {
     // アプリライフサイクルの監視を停止
     WidgetsBinding.instance.removeObserver(this);
+    // ウィンドウリサイズの監視を停止
+    windowManager.removeListener(this);
+    // デバウンスタイマーをキャンセル
+    _debounceTimer?.cancel();
     super.dispose();
+  }
+
+  @override
+  void onWindowResize() {
+    super.onWindowResize();
+    // デバウンス処理: 500ms後にウィンドウサイズを保存
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+      _saveWindowSize();
+    });
+  }
+
+  /// ウィンドウサイズを保存する
+  ///
+  /// リサイズイベント発生時にデバウンス処理を経て呼び出される
+  Future<void> _saveWindowSize() async {
+    try {
+      final size = await windowManager.getSize();
+      final width = size.width;
+      final height = size.height;
+
+      await ref.read(settingsProvider.notifier).updateWindowSize(width, height);
+      debugPrint("ウィンドウサイズを保存しました: ${width}x$height");
+    } catch (e) {
+      debugPrint("ウィンドウサイズ保存エラー: $e");
+    }
   }
 
   @override
