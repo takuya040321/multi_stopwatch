@@ -107,6 +107,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     // ストップウォッチリストを取得
     final stopwatches = ref.watch(stopwatchProvider);
 
+    // 設定を取得（レイアウトモードの判定に使用）
+    final settings = ref.watch(settingsProvider);
+    final layoutMode = settings.layoutMode;
+
+    // ウィンドウ幅を取得してグリッドの列数を計算
+    final screenWidth = MediaQuery.of(context).size.width;
+    // 最小400pxで1列、以降400pxごとに1列追加（最大10列）
+    final crossAxisCount = (screenWidth / 400).floor().clamp(1, 10);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Multi Stopwatch"),
@@ -134,15 +143,38 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
           ? const Center(
               child: Text("ストップウォッチがありません"),
             )
-          : ListView.builder(
-              itemCount: stopwatches.length,
-              itemBuilder: (context, index) {
-                final stopwatch = stopwatches[index];
-                return StopwatchCard(
-                  key: ValueKey(stopwatch.id),
-                  stopwatch: stopwatch,
-                );
-              },
+          : AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: layoutMode == "GRID"
+                  ? GridView.builder(
+                      key: const ValueKey("grid"),
+                      padding: const EdgeInsets.all(16),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        childAspectRatio: 1.5, // カードの縦横比
+                      ),
+                      itemCount: stopwatches.length,
+                      itemBuilder: (context, index) {
+                        final stopwatch = stopwatches[index];
+                        return StopwatchCard(
+                          key: ValueKey(stopwatch.id),
+                          stopwatch: stopwatch,
+                        );
+                      },
+                    )
+                  : ListView.builder(
+                      key: const ValueKey("list"),
+                      itemCount: stopwatches.length,
+                      itemBuilder: (context, index) {
+                        final stopwatch = stopwatches[index];
+                        return StopwatchCard(
+                          key: ValueKey(stopwatch.id),
+                          stopwatch: stopwatch,
+                        );
+                      },
+                    ),
             ),
     );
   }
