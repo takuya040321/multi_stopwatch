@@ -2,17 +2,16 @@ import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:uuid/uuid.dart";
 import "../models/stopwatch_model.dart";
 import "../repositories/stopwatch_repository.dart";
+import "settings_provider.dart";
 
 /// ストップウォッチリストの状態管理を行うStateNotifier
 ///
 /// ストップウォッチの追加、削除、名称変更、開始、停止、リセットなどの操作を管理する
 class StopwatchNotifier extends StateNotifier<List<StopwatchModel>> {
   final StopwatchRepository _repository;
-  
-  /// 単一計測モードが有効かどうか（Phase 6で設定から取得するが、現時点ではデフォルトtrue）
-  final bool _isSingleMeasurementMode = true;
+  final Ref _ref;
 
-  StopwatchNotifier(this._repository) : super([]);
+  StopwatchNotifier(this._repository, this._ref) : super([]);
 
   /// リポジトリからストップウォッチデータを読み込む
   ///
@@ -106,11 +105,14 @@ class StopwatchNotifier extends StateNotifier<List<StopwatchModel>> {
   /// [id] 開始するストップウォッチのID
   /// 単一計測モードの場合、他の計測中のストップウォッチを停止する
   Future<void> startStopwatch(String id) async {
+    // 設定から単一計測モードを取得
+    final isSingleMeasurementMode = _ref.read(settingsProvider).isSingleMeasurementMode;
+
     state = [
       for (final sw in state)
         if (sw.id == id)
           sw.copyWith(isRunning: true)
-        else if (_isSingleMeasurementMode && sw.isRunning)
+        else if (isSingleMeasurementMode && sw.isRunning)
           // 単一計測モードの場合は他を停止
           sw.copyWith(isRunning: false)
         else
@@ -190,5 +192,5 @@ final initializeRepositoryProvider = FutureProvider<void>((ref) async {
 final stopwatchProvider =
     StateNotifierProvider<StopwatchNotifier, List<StopwatchModel>>((ref) {
   final repository = ref.watch(stopwatchRepositoryProvider);
-  return StopwatchNotifier(repository);
+  return StopwatchNotifier(repository, ref);
 });
