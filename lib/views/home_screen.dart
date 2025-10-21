@@ -7,7 +7,9 @@ import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 import "../providers/stopwatch_provider.dart";
 import "../providers/timer_provider.dart";
+import "../providers/settings_provider.dart";
 import "widgets/stopwatch_card.dart";
+import "settings_screen.dart";
 
 /// ホーム画面
 class HomeScreen extends ConsumerStatefulWidget {
@@ -64,11 +66,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
   /// リポジトリの初期化とストップウォッチデータの読み込みを行う
   Future<void> _initializeApp() async {
     try {
-      // リポジトリの初期化
+      // ストップウォッチリポジトリの初期化
       await ref.read(initializeRepositoryProvider.future);
+
+      // 設定リポジトリの初期化
+      await ref.read(initializeSettingsRepositoryProvider.future);
 
       // ストップウォッチデータの読み込み
       await ref.read(stopwatchProvider.notifier).loadStopwatches();
+
+      // 設定データの読み込み
+      await ref.read(settingsProvider.notifier).loadSettings();
 
       setState(() {
         _isInitialized = true;
@@ -113,8 +121,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
-              // TODO: Phase 6で設定画面に遷移
-              debugPrint("設定ボタンが押されました");
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
+              );
             },
             tooltip: "設定",
           ),
