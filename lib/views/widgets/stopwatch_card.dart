@@ -8,6 +8,7 @@ import "package:flutter_riverpod/flutter_riverpod.dart";
 import "../../models/stopwatch_model.dart";
 import "../../providers/stopwatch_provider.dart";
 import "../../utils/constants.dart";
+import "../../utils/snackbar_helper.dart";
 import "time_display.dart";
 
 /// ストップウォッチカード
@@ -29,6 +30,7 @@ class StopwatchCard extends ConsumerStatefulWidget {
 class _StopwatchCardState extends ConsumerState<StopwatchCard> {
   late TextEditingController _nameController;
   bool _isEditing = false;
+  bool _isHovered = false;
 
   @override
   void initState() {
@@ -60,12 +62,19 @@ class _StopwatchCardState extends ConsumerState<StopwatchCard> {
     // エージェントカラーを取得
     final agentColor = Color(agentColors[index % agentColors.length]);
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        child: Card(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          elevation: _isHovered ? 8 : 2,
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
             // 左端のエージェントカラー縦線
             Container(
               width: 4,
@@ -121,25 +130,28 @@ class _StopwatchCardState extends ConsumerState<StopwatchCard> {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         // 開始ボタン
-                        IconButton(
-                          icon: const Icon(Icons.play_arrow),
+                        _AnimatedButton(
+                          icon: Icons.play_arrow,
                           onPressed: widget.stopwatch.isRunning ? null : _startStopwatch,
-                          tooltip: "開始",
+                          tooltip: "計測を開始",
                           color: widget.stopwatch.isRunning ? Colors.grey : Colors.green,
+                          isEnabled: !widget.stopwatch.isRunning,
                         ),
                         // 停止ボタン
-                        IconButton(
-                          icon: const Icon(Icons.pause),
+                        _AnimatedButton(
+                          icon: Icons.pause,
                           onPressed: widget.stopwatch.isRunning ? _stopStopwatch : null,
-                          tooltip: "停止",
+                          tooltip: "計測を停止",
                           color: widget.stopwatch.isRunning ? Colors.orange : Colors.grey,
+                          isEnabled: widget.stopwatch.isRunning,
                         ),
                         // リセットボタン
-                        IconButton(
-                          icon: const Icon(Icons.refresh),
+                        _AnimatedButton(
+                          icon: Icons.refresh,
                           onPressed: _resetStopwatch,
-                          tooltip: "リセット",
+                          tooltip: "計測時間をリセット",
                           color: Colors.blue,
+                          isEnabled: true,
                         ),
                       ],
                     ),
@@ -147,7 +159,9 @@ class _StopwatchCardState extends ConsumerState<StopwatchCard> {
                 ),
               ),
             ),
-          ],
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -165,12 +179,7 @@ class _StopwatchCardState extends ConsumerState<StopwatchCard> {
             );
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text("名称の更新に失敗しました: $e"),
-              backgroundColor: Colors.red,
-            ),
-          );
+          showErrorSnackBar(context, "名称の更新に失敗しました: $e");
         }
       }
     }
@@ -182,12 +191,7 @@ class _StopwatchCardState extends ConsumerState<StopwatchCard> {
       await ref.read(stopwatchProvider.notifier).startStopwatch(widget.stopwatch.id);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("開始に失敗しました: $e"),
-            backgroundColor: Colors.red,
-          ),
-        );
+        showErrorSnackBar(context, "開始に失敗しました: $e");
       }
     }
   }
@@ -198,28 +202,47 @@ class _StopwatchCardState extends ConsumerState<StopwatchCard> {
       await ref.read(stopwatchProvider.notifier).stopStopwatch(widget.stopwatch.id);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("停止に失敗しました: $e"),
-            backgroundColor: Colors.red,
-          ),
-        );
+        showErrorSnackBar(context, "停止に失敗しました: $e");
       }
     }
   }
 
   /// ストップウォッチをリセットする
   Future<void> _resetStopwatch() async {
+    // 経過時間が0秒より大きい場合のみ確認ダイアログを表示
+    if (widget.stopwatch.elapsedSeconds > 0) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("リセット確認"),
+          content: const Text("計測時間をリセットしますか？この操作は取り消せません。"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text("キャンセル"),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text(
+                "リセット",
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed != true) return;
+    }
+
     try {
       await ref.read(stopwatchProvider.notifier).resetStopwatch(widget.stopwatch.id);
+      if (mounted) {
+        showSuccessSnackBar(context, "計測時間をリセットしました");
+      }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("リセットに失敗しました: $e"),
-            backgroundColor: Colors.red,
-          ),
-        );
+        showErrorSnackBar(context, "リセットに失敗しました: $e");
       }
     }
   }
@@ -248,16 +271,63 @@ class _StopwatchCardState extends ConsumerState<StopwatchCard> {
     if (confirmed == true) {
       try {
         await ref.read(stopwatchProvider.notifier).removeStopwatch(widget.stopwatch.id);
+        if (mounted) {
+          showSuccessSnackBar(context, "ストップウォッチを削除しました");
+        }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(e.toString().replaceFirst("Exception: ", "")),
-              backgroundColor: Colors.red,
-            ),
-          );
+          showErrorSnackBar(context, e.toString().replaceFirst("Exception: ", ""));
         }
       }
     }
+  }
+}
+
+/// アニメーション付きボタンウィジェット
+///
+/// ホバー時にスケールアニメーションを適用するアイコンボタン
+class _AnimatedButton extends StatefulWidget {
+  final IconData icon;
+  final VoidCallback? onPressed;
+  final String tooltip;
+  final Color color;
+  final bool isEnabled;
+
+  const _AnimatedButton({
+    required this.icon,
+    required this.onPressed,
+    required this.tooltip,
+    required this.color,
+    required this.isEnabled,
+  });
+
+  @override
+  State<_AnimatedButton> createState() => _AnimatedButtonState();
+}
+
+class _AnimatedButtonState extends State<_AnimatedButton> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedScale(
+        scale: _isHovered && widget.isEnabled ? 1.2 : 1.0,
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeInOut,
+        child: Tooltip(
+          message: widget.tooltip,
+          waitDuration: const Duration(milliseconds: 500),
+          child: IconButton(
+            icon: Icon(widget.icon),
+            onPressed: widget.onPressed,
+            color: widget.color,
+            iconSize: 28,
+          ),
+        ),
+      ),
+    );
   }
 }
