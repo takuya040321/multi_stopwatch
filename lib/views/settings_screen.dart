@@ -30,6 +30,16 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const Divider(),
 
+          // 時間表示セクション
+          _buildSectionTitle("時間表示"),
+          SwitchListTile(
+            title: const Text("秒数を表示"),
+            subtitle: const Text("ONの場合、時間を HH:MM:SS 形式で表示します"),
+            value: settings.showSeconds,
+            onChanged: (value) => _toggleShowSeconds(context, ref, value),
+          ),
+          const Divider(),
+
           // レイアウトセクション
           _buildSectionTitle("レイアウト"),
           // ignore: deprecated_member_use
@@ -202,6 +212,30 @@ class SettingsScreen extends ConsumerWidget {
   ) async {
     try {
       await ref.read(settingsProvider.notifier).toggleLayoutMode(layoutMode);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceFirst("Exception: ", "")),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  /// 秒数表示を切り替える
+  ///
+  /// [context] BuildContext
+  /// [ref] WidgetRef
+  /// [showSeconds] 秒数を表示するかどうか
+  Future<void> _toggleShowSeconds(
+    BuildContext context,
+    WidgetRef ref,
+    bool showSeconds,
+  ) async {
+    try {
+      await ref.read(settingsProvider.notifier).toggleShowSeconds(showSeconds);
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

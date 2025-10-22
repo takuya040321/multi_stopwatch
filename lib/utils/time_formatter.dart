@@ -16,6 +16,22 @@ String formatToHHMM(int seconds) {
   return "${hours.toString().padLeft(2, "0")}:${minutes.toString().padLeft(2, "0")}";
 }
 
+/// 秒数をHH:MM:SS形式の文字列に変換する
+///
+/// [seconds] 変換する秒数（0以上の整数）
+/// 戻り値: "HH:MM:SS" 形式の文字列（例: "01:30:45", "12:45:30"）
+String formatToHHMMSS(int seconds) {
+  if (seconds < 0) {
+    seconds = 0;
+  }
+
+  final hours = seconds ~/ 3600;
+  final minutes = (seconds % 3600) ~/ 60;
+  final secs = seconds % 60;
+
+  return "${hours.toString().padLeft(2, "0")}:${minutes.toString().padLeft(2, "0")}:${secs.toString().padLeft(2, "0")}";
+}
+
 /// 秒数を0.25単位（15分単位）の小数表記に変換する
 ///
 /// [seconds] 変換する秒数（0以上の整数）
