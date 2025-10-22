@@ -129,21 +129,13 @@ class _StopwatchCardState extends ConsumerState<StopwatchCard> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        // 開始ボタン
+                        // 開始/一時停止ボタン（一体化）
                         _AnimatedButton(
-                          icon: Icons.play_arrow,
-                          onPressed: widget.stopwatch.isRunning ? null : _startStopwatch,
-                          tooltip: "計測を開始",
-                          color: widget.stopwatch.isRunning ? Colors.grey : Colors.green,
-                          isEnabled: !widget.stopwatch.isRunning,
-                        ),
-                        // 停止ボタン
-                        _AnimatedButton(
-                          icon: Icons.pause,
-                          onPressed: widget.stopwatch.isRunning ? _stopStopwatch : null,
-                          tooltip: "計測を停止",
-                          color: widget.stopwatch.isRunning ? Colors.orange : Colors.grey,
-                          isEnabled: widget.stopwatch.isRunning,
+                          icon: widget.stopwatch.isRunning ? Icons.pause : Icons.play_arrow,
+                          onPressed: widget.stopwatch.isRunning ? _stopStopwatch : _startStopwatch,
+                          tooltip: widget.stopwatch.isRunning ? "計測を一時停止" : "計測を開始",
+                          color: widget.stopwatch.isRunning ? Colors.orange : Colors.green,
+                          isEnabled: true,
                         ),
                         // リセットボタン
                         _AnimatedButton(
@@ -249,35 +241,14 @@ class _StopwatchCardState extends ConsumerState<StopwatchCard> {
 
   /// ストップウォッチを削除する
   Future<void> _deleteStopwatch() async {
-    // 確認ダイアログを表示
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("削除確認"),
-        content: Text("${widget.stopwatch.name}を削除しますか？"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text("キャンセル"),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text("削除"),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      try {
-        await ref.read(stopwatchProvider.notifier).removeStopwatch(widget.stopwatch.id);
-        if (mounted) {
-          showSuccessSnackBar(context, "ストップウォッチを削除しました");
-        }
-      } catch (e) {
-        if (mounted) {
-          showErrorSnackBar(context, e.toString().replaceFirst("Exception: ", ""));
-        }
+    try {
+      await ref.read(stopwatchProvider.notifier).removeStopwatch(widget.stopwatch.id);
+      if (mounted) {
+        showSuccessSnackBar(context, "ストップウォッチを削除しました");
+      }
+    } catch (e) {
+      if (mounted) {
+        showErrorSnackBar(context, e.toString().replaceFirst("Exception: ", ""));
       }
     }
   }
