@@ -161,6 +161,22 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       throw Exception("自動停止時刻の更新に失敗しました。もう一度お試しください。");
     }
   }
+
+  /// 秒数表示の有効/無効を切り替える
+  ///
+  /// [showSeconds] true: HH:MM:SS形式, false: HH:MM形式
+  Future<void> toggleShowSeconds(bool showSeconds) async {
+    try {
+      final newSettings = state.copyWith(
+        showSeconds: showSeconds,
+      );
+      state = newSettings;
+      await _repository.saveSettings(newSettings);
+    } catch (e) {
+      debugPrint("秒数表示切り替えエラー: $e");
+      throw Exception("秒数表示の変更に失敗しました。もう一度お試しください。");
+    }
+  }
 }
 
 /// SettingsRepositoryのプロバイダー

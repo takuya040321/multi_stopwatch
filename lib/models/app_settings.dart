@@ -19,12 +19,16 @@ class AppSettings {
   /// 自動停止時刻のリスト（最大5個）
   final List<AutoStopTime> autoStopTimes;
 
+  /// 秒数表示を有効にするか（true: HH:MM:SS、false: HH:MM）
+  final bool showSeconds;
+
   const AppSettings({
     required this.isSingleMeasurementMode,
     required this.layoutMode,
     required this.windowWidth,
     required this.windowHeight,
     required this.autoStopTimes,
+    required this.showSeconds,
   });
 
   /// デフォルト設定を返すファクトリコンストラクタ
@@ -35,6 +39,7 @@ class AppSettings {
       windowWidth: 1200.0,
       windowHeight: 800.0,
       autoStopTimes: [],
+      showSeconds: false,
     );
   }
 
@@ -47,6 +52,7 @@ class AppSettings {
     double? windowWidth,
     double? windowHeight,
     List<AutoStopTime>? autoStopTimes,
+    bool? showSeconds,
   }) {
     return AppSettings(
       isSingleMeasurementMode: isSingleMeasurementMode ?? this.isSingleMeasurementMode,
@@ -54,6 +60,7 @@ class AppSettings {
       windowWidth: windowWidth ?? this.windowWidth,
       windowHeight: windowHeight ?? this.windowHeight,
       autoStopTimes: autoStopTimes ?? this.autoStopTimes,
+      showSeconds: showSeconds ?? this.showSeconds,
     );
   }
 
@@ -71,6 +78,7 @@ class AppSettings {
       windowWidth: (json["windowWidth"] as num?)?.toDouble() ?? 1200.0,
       windowHeight: (json["windowHeight"] as num?)?.toDouble() ?? 800.0,
       autoStopTimes: autoStopTimesList,
+      showSeconds: json["showSeconds"] as bool? ?? false,
     );
   }
 
@@ -84,6 +92,7 @@ class AppSettings {
       "windowWidth": windowWidth,
       "windowHeight": windowHeight,
       "autoStopTimes": autoStopTimes.map((time) => time.toJson()).toList(),
+      "showSeconds": showSeconds,
     };
   }
 }
