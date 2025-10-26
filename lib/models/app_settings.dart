@@ -22,6 +22,9 @@ class AppSettings {
   /// 秒数表示を有効にするか（true: HH:MM:SS、false: HH:MM）
   final bool showSeconds;
 
+  /// UIスタイル（"COMPACT_A", "COMPACT_B", "COMPACT_C"）
+  final String uiStyle;
+
   const AppSettings({
     required this.isSingleMeasurementMode,
     required this.layoutMode,
@@ -29,6 +32,7 @@ class AppSettings {
     required this.windowHeight,
     required this.autoStopTimes,
     required this.showSeconds,
+    required this.uiStyle,
   });
 
   /// デフォルト設定を返すファクトリコンストラクタ
@@ -36,10 +40,11 @@ class AppSettings {
     return const AppSettings(
       isSingleMeasurementMode: true,
       layoutMode: "LIST",
-      windowWidth: 1200.0,
-      windowHeight: 800.0,
+      windowWidth: 400.0,
+      windowHeight: 500.0,
       autoStopTimes: [],
       showSeconds: false,
+      uiStyle: "COMPACT_A",
     );
   }
 
@@ -53,6 +58,7 @@ class AppSettings {
     double? windowHeight,
     List<AutoStopTime>? autoStopTimes,
     bool? showSeconds,
+    String? uiStyle,
   }) {
     return AppSettings(
       isSingleMeasurementMode: isSingleMeasurementMode ?? this.isSingleMeasurementMode,
@@ -61,6 +67,7 @@ class AppSettings {
       windowHeight: windowHeight ?? this.windowHeight,
       autoStopTimes: autoStopTimes ?? this.autoStopTimes,
       showSeconds: showSeconds ?? this.showSeconds,
+      uiStyle: uiStyle ?? this.uiStyle,
     );
   }
 
@@ -75,10 +82,11 @@ class AppSettings {
     return AppSettings(
       isSingleMeasurementMode: json["isSingleMeasurementMode"] as bool? ?? true,
       layoutMode: json["layoutMode"] as String? ?? "LIST",
-      windowWidth: (json["windowWidth"] as num?)?.toDouble() ?? 1200.0,
-      windowHeight: (json["windowHeight"] as num?)?.toDouble() ?? 800.0,
+      windowWidth: (json["windowWidth"] as num?)?.toDouble() ?? 400.0,
+      windowHeight: (json["windowHeight"] as num?)?.toDouble() ?? 500.0,
       autoStopTimes: autoStopTimesList,
       showSeconds: json["showSeconds"] as bool? ?? false,
+      uiStyle: json["uiStyle"] as String? ?? "COMPACT_A",
     );
   }
 
@@ -93,6 +101,7 @@ class AppSettings {
       "windowHeight": windowHeight,
       "autoStopTimes": autoStopTimes.map((time) => time.toJson()).toList(),
       "showSeconds": showSeconds,
+      "uiStyle": uiStyle,
     };
   }
 }
