@@ -198,6 +198,27 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       throw Exception("UIスタイルの変更に失敗しました。もう一度お試しください。");
     }
   }
+
+  /// 自動停止ピッカースタイルを変更する
+  ///
+  /// [pickerStyle] "PICKER_A", "PICKER_B", "PICKER_C"
+  Future<void> toggleAutoStopPickerStyle(String pickerStyle) async {
+    // ピッカースタイルの検証
+    if (pickerStyle != "PICKER_A" && pickerStyle != "PICKER_B" && pickerStyle != "PICKER_C") {
+      throw Exception("無効なピッカースタイルです。");
+    }
+
+    try {
+      final newSettings = state.copyWith(
+        autoStopPickerStyle: pickerStyle,
+      );
+      state = newSettings;
+      await _repository.saveSettings(newSettings);
+    } catch (e) {
+      debugPrint("ピッカースタイル変更エラー: $e");
+      throw Exception("ピッカースタイルの変更に失敗しました。もう一度お試しください。");
+    }
+  }
 }
 
 /// SettingsRepositoryのプロバイダー
