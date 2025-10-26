@@ -1,8 +1,9 @@
 import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
-import "package:uuid/uuid.dart";
-import "../models/auto_stop_time.dart";
 import "../providers/settings_provider.dart";
+import "widgets/auto_stop_duration_picker_a.dart";
+import "widgets/auto_stop_duration_picker_b.dart";
+import "widgets/auto_stop_duration_picker_c.dart";
 
 /// 設定画面
 ///
@@ -97,80 +98,47 @@ class SettingsScreen extends ConsumerWidget {
           _buildNote("※グリッドレイアウトは次のPhaseで実装予定です"),
           const Divider(),
 
-          // 自動停止時刻セクション
-          _buildSectionTitle("自動停止時刻"),
-          _buildNote("設定した時刻になると、計測中のストップウォッチをすべて自動停止します（最大5個）"),
+          // 自動停止時間ピッカースタイルセクション
+          _buildSectionTitle("自動停止時間設定スタイル"),
+          _buildNote("経過時間で自動停止する時間の設定方法を選択できます"),
+          // ignore: deprecated_member_use
+          RadioListTile<String>(
+            title: const Text("パターンA: ドロップダウン式"),
+            subtitle: const Text("プリセット時間とカスタム設定を組み合わせたシンプルなUI"),
+            value: "PICKER_A",
+            // ignore: deprecated_member_use
+            groupValue: settings.autoStopPickerStyle,
+            // ignore: deprecated_member_use
+            onChanged: (value) => _togglePickerStyle(context, ref, value!),
+          ),
+          // ignore: deprecated_member_use
+          RadioListTile<String>(
+            title: const Text("パターンB: 数値入力式"),
+            subtitle: const Text("時間・分を直接入力できる柔軟なタイマー式UI"),
+            value: "PICKER_B",
+            // ignore: deprecated_member_use
+            groupValue: settings.autoStopPickerStyle,
+            // ignore: deprecated_member_use
+            onChanged: (value) => _togglePickerStyle(context, ref, value!),
+          ),
+          // ignore: deprecated_member_use
+          RadioListTile<String>(
+            title: const Text("パターンC: スライダー式"),
+            subtitle: const Text("スライダーで視覚的に時間を設定するモダンなUI"),
+            value: "PICKER_C",
+            // ignore: deprecated_member_use
+            groupValue: settings.autoStopPickerStyle,
+            // ignore: deprecated_member_use
+            onChanged: (value) => _togglePickerStyle(context, ref, value!),
+          ),
+          const Divider(),
+
+          // 自動停止時間設定デモ
+          _buildSectionTitle("設定デモ"),
+          _buildNote("選択したスタイルのピッカーを試すことができます"),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 自動停止時刻リスト
-                ...settings.autoStopTimes.map((autoStopTime) {
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    child: ListTile(
-                      leading: const Icon(Icons.access_time),
-                      title: Text(
-                        "${autoStopTime.hour.toString().padLeft(2, "0")}:${autoStopTime.minute.toString().padLeft(2, "0")}",
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // 有効/無効スイッチ
-                          Switch(
-                            value: autoStopTime.isEnabled,
-                            onChanged: (value) {
-                              ref.read(settingsProvider.notifier).updateAutoStopTime(
-                                    id: autoStopTime.id,
-                                    isEnabled: value,
-                                  );
-                            },
-                          ),
-                          // 削除ボタン
-                          IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () {
-                              ref.read(settingsProvider.notifier).removeAutoStopTime(autoStopTime.id);
-                            },
-                            tooltip: "削除",
-                          ),
-                        ],
-                      ),
-                      onTap: () async {
-                        // タップで編集
-                        await _editAutoStopTime(context, ref, autoStopTime);
-                      },
-                    ),
-                  );
-                }),
-                const SizedBox(height: 8),
-                // 追加ボタン
-                if (settings.autoStopTimes.length < 5)
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () async {
-                        await _addAutoStopTime(context, ref);
-                      },
-                      icon: const Icon(Icons.add),
-                      label: const Text("自動停止時刻を追加"),
-                    ),
-                  ),
-                if (settings.autoStopTimes.length >= 5)
-                  const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text(
-                      "最大5個まで追加できます",
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  ),
-              ],
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: _buildDurationPicker(settings.autoStopPickerStyle),
           ),
         ],
       ),
@@ -305,104 +273,64 @@ class SettingsScreen extends ConsumerWidget {
       }
     }
   }
-}
 
-/// 自動停止時刻を追加する
-///
-/// [context] BuildContext
-/// [ref] WidgetRef
-Future<void> _addAutoStopTime(BuildContext context, WidgetRef ref) async {
-  final now = DateTime.now();
-
-  final pickedTime = await showTimePicker(
-    context: context,
-    initialTime: TimeOfDay(hour: now.hour, minute: now.minute),
-    builder: (context, child) {
-      return MediaQuery(
-        data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
-        child: child!,
-      );
-    },
-  );
-
-  if (pickedTime == null) return;
-
-  try {
-    final autoStopTime = AutoStopTime(
-      id: const Uuid().v4(),
-      hour: pickedTime.hour,
-      minute: pickedTime.minute,
-      isEnabled: true,
-    );
-
-    await ref.read(settingsProvider.notifier).addAutoStopTime(autoStopTime);
-
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("自動停止時刻を追加しました"),
-          backgroundColor: Colors.green,
-        ),
-      );
-    }
-  } catch (e) {
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString().replaceFirst("Exception: ", "")),
-          backgroundColor: Colors.red,
-        ),
-      );
+  /// ピッカースタイルを切り替える
+  ///
+  /// [context] BuildContext
+  /// [ref] WidgetRef
+  /// [pickerStyle] ピッカースタイル (\"PICKER_A\", \"PICKER_B\", \"PICKER_C\")
+  Future<void> _togglePickerStyle(
+    BuildContext context,
+    WidgetRef ref,
+    String pickerStyle,
+  ) async {
+    try {
+      await ref.read(settingsProvider.notifier).toggleAutoStopPickerStyle(pickerStyle);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceFirst("Exception: ", "")),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
-}
 
-/// 自動停止時刻を編集する
-///
-/// [context] BuildContext
-/// [ref] WidgetRef
-/// [autoStopTime] 編集対象の自動停止時刻
-Future<void> _editAutoStopTime(
-  BuildContext context,
-  WidgetRef ref,
-  AutoStopTime autoStopTime,
-) async {
-  final pickedTime = await showTimePicker(
-    context: context,
-    initialTime: TimeOfDay(hour: autoStopTime.hour, minute: autoStopTime.minute),
-    builder: (context, child) {
-      return MediaQuery(
-        data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
-        child: child!,
-      );
-    },
-  );
-
-  if (pickedTime == null) return;
-
-  try {
-    await ref.read(settingsProvider.notifier).updateAutoStopTime(
-          id: autoStopTime.id,
-          hour: pickedTime.hour,
-          minute: pickedTime.minute,
+  /// 選択されたスタイルのピッカーを構築する
+  ///
+  /// [pickerStyle] ピッカースタイル
+  Widget _buildDurationPicker(String pickerStyle) {
+    switch (pickerStyle) {
+      case "PICKER_A":
+        return AutoStopDurationPickerA(
+          initialSeconds: 1800, // デフォルト30分
+          onChanged: (seconds) {
+            debugPrint("選択された時間: $seconds秒");
+          },
         );
-
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("自動停止時刻を更新しました"),
-          backgroundColor: Colors.green,
-        ),
-      );
-    }
-  } catch (e) {
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString().replaceFirst("Exception: ", "")),
-          backgroundColor: Colors.red,
-        ),
-      );
+      case "PICKER_B":
+        return AutoStopDurationPickerB(
+          initialSeconds: 1800, // デフォルト30分
+          onChanged: (seconds) {
+            debugPrint("選択された時間: $seconds秒");
+          },
+        );
+      case "PICKER_C":
+        return AutoStopDurationPickerC(
+          initialSeconds: 1800, // デフォルト30分
+          onChanged: (seconds) {
+            debugPrint("選択された時間: $seconds秒");
+          },
+        );
+      default:
+        return AutoStopDurationPickerA(
+          initialSeconds: 1800,
+          onChanged: (seconds) {
+            debugPrint("選択された時間: $seconds秒");
+          },
+        );
     }
   }
 }
