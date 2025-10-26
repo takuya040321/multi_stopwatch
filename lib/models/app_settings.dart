@@ -25,6 +25,9 @@ class AppSettings {
   /// UIスタイル（"COMPACT_A", "COMPACT_B", "COMPACT_C"）
   final String uiStyle;
 
+  /// 自動停止時間ピッカーのスタイル（"PICKER_A", "PICKER_B", "PICKER_C"）
+  final String autoStopPickerStyle;
+
   const AppSettings({
     required this.isSingleMeasurementMode,
     required this.layoutMode,
@@ -33,6 +36,7 @@ class AppSettings {
     required this.autoStopTimes,
     required this.showSeconds,
     required this.uiStyle,
+    required this.autoStopPickerStyle,
   });
 
   /// デフォルト設定を返すファクトリコンストラクタ
@@ -45,6 +49,7 @@ class AppSettings {
       autoStopTimes: [],
       showSeconds: false,
       uiStyle: "COMPACT_A",
+      autoStopPickerStyle: "PICKER_A",
     );
   }
 
@@ -59,6 +64,7 @@ class AppSettings {
     List<AutoStopTime>? autoStopTimes,
     bool? showSeconds,
     String? uiStyle,
+    String? autoStopPickerStyle,
   }) {
     return AppSettings(
       isSingleMeasurementMode: isSingleMeasurementMode ?? this.isSingleMeasurementMode,
@@ -68,6 +74,7 @@ class AppSettings {
       autoStopTimes: autoStopTimes ?? this.autoStopTimes,
       showSeconds: showSeconds ?? this.showSeconds,
       uiStyle: uiStyle ?? this.uiStyle,
+      autoStopPickerStyle: autoStopPickerStyle ?? this.autoStopPickerStyle,
     );
   }
 
@@ -87,6 +94,7 @@ class AppSettings {
       autoStopTimes: autoStopTimesList,
       showSeconds: json["showSeconds"] as bool? ?? false,
       uiStyle: json["uiStyle"] as String? ?? "COMPACT_A",
+      autoStopPickerStyle: json["autoStopPickerStyle"] as String? ?? "PICKER_A",
     );
   }
 
@@ -102,6 +110,7 @@ class AppSettings {
       "autoStopTimes": autoStopTimes.map((time) => time.toJson()).toList(),
       "showSeconds": showSeconds,
       "uiStyle": uiStyle,
+      "autoStopPickerStyle": autoStopPickerStyle,
     };
   }
 }
