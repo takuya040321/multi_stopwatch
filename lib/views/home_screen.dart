@@ -8,12 +8,16 @@ import "package:flutter/material.dart";
 import "package:flutter/services.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:window_manager/window_manager.dart";
+import "../models/stopwatch_model.dart";
 import "../providers/auto_stop_provider.dart";
 import "../providers/stopwatch_provider.dart";
 import "../providers/timer_provider.dart";
 import "../providers/settings_provider.dart";
 import "../utils/snackbar_helper.dart";
 import "widgets/stopwatch_card.dart";
+import "widgets/stopwatch_card_compact_a.dart";
+import "widgets/stopwatch_card_compact_b.dart";
+import "widgets/stopwatch_card_compact_c.dart";
 import "settings_screen.dart";
 
 /// ホーム画面
@@ -148,9 +152,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     // ストップウォッチリストを取得
     final stopwatches = ref.watch(stopwatchProvider);
 
-    // 設定を取得（レイアウトモードの判定に使用）
+    // 設定を取得（レイアウトモードとUIスタイルの判定に使用）
     final settings = ref.watch(settingsProvider);
     final layoutMode = settings.layoutMode;
+    final uiStyle = settings.uiStyle;
 
     // ウィンドウ幅を取得してグリッドの列数を計算
     final screenWidth = MediaQuery.of(context).size.width;
@@ -211,10 +216,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                       itemCount: stopwatches.length,
                       itemBuilder: (context, index) {
                         final stopwatch = stopwatches[index];
-                        return StopwatchCard(
-                          key: ValueKey(stopwatch.id),
-                          stopwatch: stopwatch,
-                        );
+                        return _buildStopwatchCard(stopwatch, uiStyle);
                       },
                     )
                   : ListView.builder(
@@ -222,16 +224,39 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                       itemCount: stopwatches.length,
                       itemBuilder: (context, index) {
                         final stopwatch = stopwatches[index];
-                        return StopwatchCard(
-                          key: ValueKey(stopwatch.id),
-                          stopwatch: stopwatch,
-                        );
+                        return _buildStopwatchCard(stopwatch, uiStyle);
                       },
                     ),
             ),
         ),
       ),
     );
+  }
+
+  /// UIスタイルに応じたストップウォッチカードを生成する
+  Widget _buildStopwatchCard(StopwatchModel stopwatch, String uiStyle) {
+    switch (uiStyle) {
+      case "COMPACT_A":
+        return StopwatchCardCompactA(
+          key: ValueKey(stopwatch.id),
+          stopwatch: stopwatch,
+        );
+      case "COMPACT_B":
+        return StopwatchCardCompactB(
+          key: ValueKey(stopwatch.id),
+          stopwatch: stopwatch,
+        );
+      case "COMPACT_C":
+        return StopwatchCardCompactC(
+          key: ValueKey(stopwatch.id),
+          stopwatch: stopwatch,
+        );
+      default:
+        return StopwatchCard(
+          key: ValueKey(stopwatch.id),
+          stopwatch: stopwatch,
+        );
+    }
   }
 
   /// ストップウォッチを追加する

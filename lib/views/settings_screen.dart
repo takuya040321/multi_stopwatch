@@ -40,6 +40,40 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const Divider(),
 
+          // UIスタイルセクション
+          _buildSectionTitle("UIスタイル"),
+          // ignore: deprecated_member_use
+          RadioListTile<String>(
+            title: const Text("パターンA: ミニマルカード"),
+            subtitle: const Text("グラデーションカードの最小限デザイン"),
+            value: "COMPACT_A",
+            // ignore: deprecated_member_use
+            groupValue: settings.uiStyle,
+            // ignore: deprecated_member_use
+            onChanged: (value) => _toggleUiStyle(context, ref, value!),
+          ),
+          // ignore: deprecated_member_use
+          RadioListTile<String>(
+            title: const Text("パターンB: フラットリスト"),
+            subtitle: const Text("1行に全情報を配置したフラットデザイン"),
+            value: "COMPACT_B",
+            // ignore: deprecated_member_use
+            groupValue: settings.uiStyle,
+            // ignore: deprecated_member_use
+            onChanged: (value) => _toggleUiStyle(context, ref, value!),
+          ),
+          // ignore: deprecated_member_use
+          RadioListTile<String>(
+            title: const Text("パターンC: グラスモーフィズム"),
+            subtitle: const Text("半透明の背景とぼかし効果のモダンデザイン"),
+            value: "COMPACT_C",
+            // ignore: deprecated_member_use
+            groupValue: settings.uiStyle,
+            // ignore: deprecated_member_use
+            onChanged: (value) => _toggleUiStyle(context, ref, value!),
+          ),
+          const Divider(),
+
           // レイアウトセクション
           _buildSectionTitle("レイアウト"),
           // ignore: deprecated_member_use
@@ -236,6 +270,30 @@ class SettingsScreen extends ConsumerWidget {
   ) async {
     try {
       await ref.read(settingsProvider.notifier).toggleShowSeconds(showSeconds);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceFirst("Exception: ", "")),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  /// UIスタイルを切り替える
+  ///
+  /// [context] BuildContext
+  /// [ref] WidgetRef
+  /// [uiStyle] UIスタイル ("COMPACT_A", "COMPACT_B", "COMPACT_C")
+  Future<void> _toggleUiStyle(
+    BuildContext context,
+    WidgetRef ref,
+    String uiStyle,
+  ) async {
+    try {
+      await ref.read(settingsProvider.notifier).toggleUiStyle(uiStyle);
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

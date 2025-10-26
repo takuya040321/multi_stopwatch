@@ -177,6 +177,27 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       throw Exception("秒数表示の変更に失敗しました。もう一度お試しください。");
     }
   }
+
+  /// UIスタイルを変更する
+  ///
+  /// [uiStyle] "COMPACT_A", "COMPACT_B", "COMPACT_C"
+  Future<void> toggleUiStyle(String uiStyle) async {
+    // UIスタイルの検証
+    if (uiStyle != "COMPACT_A" && uiStyle != "COMPACT_B" && uiStyle != "COMPACT_C") {
+      throw Exception("無効なUIスタイルです。");
+    }
+
+    try {
+      final newSettings = state.copyWith(
+        uiStyle: uiStyle,
+      );
+      state = newSettings;
+      await _repository.saveSettings(newSettings);
+    } catch (e) {
+      debugPrint("UIスタイル変更エラー: $e");
+      throw Exception("UIスタイルの変更に失敗しました。もう一度お試しください。");
+    }
+  }
 }
 
 /// SettingsRepositoryのプロバイダー
