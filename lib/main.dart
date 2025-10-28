@@ -30,9 +30,9 @@ void main() async {
   final settings = await settingsRepository.loadSettings();
 
   // ウィンドウの最小サイズを設定
-  await windowManager.setMinimumSize(const Size(800, 600));
+  await windowManager.setMinimumSize(const Size(300, 400));
 
-  // 保存済みサイズを復元（デフォルトは1200x800）
+  // 保存済みサイズを復元（デフォルトは350x450）
   final windowWidth = settings.windowWidth;
   final windowHeight = settings.windowHeight;
   await windowManager.setSize(Size(windowWidth, windowHeight));
