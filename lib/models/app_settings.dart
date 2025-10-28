@@ -44,8 +44,8 @@ class AppSettings {
     return const AppSettings(
       isSingleMeasurementMode: true,
       layoutMode: "LIST",
-      windowWidth: 400.0,
-      windowHeight: 500.0,
+      windowWidth: 350.0,
+      windowHeight: 450.0,
       autoStopTimes: [],
       showSeconds: false,
       uiStyle: "COMPACT_A",
@@ -89,8 +89,8 @@ class AppSettings {
     return AppSettings(
       isSingleMeasurementMode: json["isSingleMeasurementMode"] as bool? ?? true,
       layoutMode: json["layoutMode"] as String? ?? "LIST",
-      windowWidth: (json["windowWidth"] as num?)?.toDouble() ?? 400.0,
-      windowHeight: (json["windowHeight"] as num?)?.toDouble() ?? 500.0,
+      windowWidth: (json["windowWidth"] as num?)?.toDouble() ?? 350.0,
+      windowHeight: (json["windowHeight"] as num?)?.toDouble() ?? 450.0,
       autoStopTimes: autoStopTimesList,
       showSeconds: json["showSeconds"] as bool? ?? false,
       uiStyle: json["uiStyle"] as String? ?? "COMPACT_A",

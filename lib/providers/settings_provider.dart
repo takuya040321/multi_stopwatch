@@ -65,15 +65,15 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
 
   /// ウィンドウサイズを更新する
   ///
-  /// [width] ウィンドウの幅（最小800）
-  /// [height] ウィンドウの高さ（最小600）
+  /// [width] ウィンドウの幅（最小300）
+  /// [height] ウィンドウの高さ（最小400）
   Future<void> updateWindowSize(double width, double height) async {
     // 最小サイズの検証
-    if (width < 800) {
-      throw Exception("ウィンドウ幅は最小800px以上である必要があります。");
+    if (width < 300) {
+      throw Exception("ウィンドウ幅は最小300px以上である必要があります。");
     }
-    if (height < 600) {
-      throw Exception("ウィンドウ高さは最小600px以上である必要があります。");
+    if (height < 400) {
+      throw Exception("ウィンドウ高さは最小400px以上である必要があります。");
     }
 
     try {
